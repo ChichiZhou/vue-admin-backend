@@ -11,6 +11,7 @@ func SetupRouter() *gin.Engine {
 	r := gin.Default()
 	// 解决跨域问题
 	r.Use(cors.Default())
+	// 如果只是后端，不需要这个
 	// 告诉gin框架模板文件引用的静态文件去哪里找
 	// r.Static("/static", "static")
 	// // 告诉gin框架去哪里找模板文件
