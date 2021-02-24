@@ -1,6 +1,8 @@
 package models
 
-import "vue-admin-backend/dao"
+import (
+	"vue-admin-backend/dao"
+)
 
 // 此处规定了前端传值只能是 title
 // 并且只能是一个 json
@@ -37,6 +39,8 @@ func FindTodoById(todo *Todo, id string) (err error) {
 
 // 改
 func SaveTodo(todo *Todo) (err error) {
+	// fmt.Println("++++++++")
+	// fmt.Println(*todo)
 	if err := dao.DB.Save(&todo).Error; err != nil {
 		return err
 	}

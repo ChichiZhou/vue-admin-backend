@@ -3,9 +3,11 @@ package controller
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 	"vue-admin-backend/models"
 
 	"github.com/gin-gonic/gin"
+	"github.com/gin-gonic/gin/binding"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 )
 
@@ -17,7 +19,7 @@ func SayHello(c *gin.Context) {
 func AddTodo(c *gin.Context) {
 	// 1.从前端页面中把数据拿出来
 	var todo models.Todo
-	c.BindJSON(&todo)
+	c.ShouldBindJSON(&todo)
 	fmt.Println(todo)
 	// 2.把数据存入数据库
 	// 存入数据的操作是 DB.Create(&todo) 但是这里把存入数据和返回响应写在一起了
@@ -42,16 +44,25 @@ func FindAllTodos(c *gin.Context) {
 }
 
 func UpdateTodo(c *gin.Context) {
-	id := c.Param("id")
 	var todo models.Todo
-	if err := models.FindTodoById(&todo, id); err != nil {
+	c.ShouldBindBodyWith(&todo, binding.JSON)
+	fmt.Println("---------------")
+	fmt.Println(todo)
+	inputID := strconv.Itoa(todo.ID)
+	// 找到要修改的数据
+	if err := models.FindTodoById(&todo, inputID); err != nil {
 		c.JSON(http.StatusOK, gin.H{
 			"error": err,
 		})
 		return
 	}
 	// 保存更新之后的数据
-	c.BindJSON(&todo)
+	// 为什么就没有了呢？？？？
+	// 采用 ShouldBindBodyWith 目的是为了多次绑定
+	// 如果再用 BindWith 将不会有数据被绑定
+	c.ShouldBindBodyWith(&todo, binding.JSON)
+	fmt.Println("========")
+	fmt.Println(todo)
 	if err := models.SaveTodo(&todo); err != nil {
 		c.JSON(http.StatusOK, gin.H{"error": err.Error()})
 	} else {
@@ -74,7 +85,7 @@ func DeleteTodo(c *gin.Context) {
 
 func FindUser(c *gin.Context) {
 	var user models.User
-	c.BindJSON(&user)
+	c.ShouldBindJSON(&user)
 
 	if err := models.FindAUser(&user); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -84,5 +95,21 @@ func FindUser(c *gin.Context) {
 		c.JSON(http.StatusAccepted, gin.H{
 			"message": "用户存在",
 		})
+	}
+}
+
+func FindItemById(c *gin.Context) {
+	var todo models.Todo
+	id, ok := c.Params.Get("id")
+	fmt.Println(id)
+	if !ok {
+		c.JSON(http.StatusOK, gin.H{"error": "无效的id"})
+		return
+	}
+	if err := models.FindTodoById(&todo, id); err != nil {
+		c.JSON(http.StatusOK, gin.H{"error": err.Error()})
+	} else {
+		fmt.Println(todo)
+		c.JSON(http.StatusOK, todo)
 	}
 }
